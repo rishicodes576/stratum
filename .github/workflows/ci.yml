@@ -65,7 +65,7 @@ jobs:
       run: { working-directory: frontend }
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: '22', cache: npm, cache-dependency-path: frontend/package-lock.json }
       - run: npm ci
       - run: npm run typecheck
@@ -79,7 +79,7 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: '22', cache: npm, cache-dependency-path: frontend/package-lock.json }
       - run: python scripts/setup.py
       - run: docker compose up --build -d --wait --wait-timeout 180 api worker web
