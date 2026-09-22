@@ -1,0 +1,15 @@
+{
+  "recorded_at": "2026-09-17T10:16:35.320973+00:00",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.13.7",
+  "path": "/v1/incidents?limit=50",
+  "requests": 200,
+  "concurrency": 10,
+  "failures": 0,
+  "wall_seconds": 5.018,
+  "requests_per_second": 39.86,
+  "p50_ms": 223.22,
+  "p95_ms": 436.59,
+  "max_ms": 782.64,
+  "scope": "Authenticated reads, local development dataset. Not a saturation test."
+}

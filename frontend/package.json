@@ -1,0 +1,35 @@
+{
+  "name": "stratum-console",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1",
+    "build": "next build",
+    "start": "node scripts/start.mjs",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "format:check": "prettier --check src tests scripts *.ts *.json",
+    "format": "prettier --write src tests scripts *.ts *.json",
+    "generate:api": "openapi-typescript openapi.json -o src/lib/schema.d.ts && prettier --write src/lib/schema.d.ts"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.20",
+    "next": "16.3.5",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
+    "@playwright/test": "1.63.0",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
+    "openapi-typescript": "^7.13.0",
+    "prettier": "^3.9.7",
+    "typescript": "^5.8.2"
+  }
+}

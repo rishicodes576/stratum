@@ -1,0 +1,21 @@
+groups:
+  - name: stratum-api
+    rules:
+      - alert: StratumApiUnavailable
+        expr: up{job="stratum-api"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: Stratum API has been unreachable for two minutes
+      - alert: StratumApiErrorRate
+        expr: sum(rate(stratum_http_requests_total{status=~"5.."}[5m])) / clamp_min(sum(rate(stratum_http_requests_total[5m])), 0.001) > 0.01
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: More than 1% of Stratum API requests are failing
+      - alert: StratumApiLatency
+        expr: histogram_quantile(0.95, sum by (le) (rate(stratum_http_request_seconds_bucket{route!="/v1/stream"}[5m]))) > 0.5
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: Stratum API p95 latency exceeds 500 ms

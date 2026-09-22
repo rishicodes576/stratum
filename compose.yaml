@@ -1,0 +1,118 @@
+name: stratum
+
+x-backend: &backend
+  build: ./backend
+  environment: &backend-env
+    ENVIRONMENT: ${ENVIRONMENT:-development}
+    DATABASE_URL: postgresql+asyncpg://stratum:${POSTGRES_PASSWORD:?Run python scripts/setup.py first}@postgres:5432/stratum
+    REDIS_URL: redis://redis:6379/0
+    REDIS_REQUIRED: "true"
+    JWT_SECRET: ${JWT_SECRET:?Run python scripts/setup.py first}
+    TRIAGE_MODEL_URL: ${TRIAGE_MODEL_URL:-}
+    TRIAGE_MODEL_KEY: ${TRIAGE_MODEL_KEY:-}
+    TRIAGE_MODEL_NAME: ${TRIAGE_MODEL_NAME:-}
+  init: true
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+  read_only: true
+  tmpfs: [/tmp]
+  networks: [internal]
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: stratum
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run python scripts/setup.py first}
+      POSTGRES_DB: stratum
+    volumes: ["postgres-data:/var/lib/postgresql"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stratum -d stratum"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    networks: [internal]
+
+  redis:
+    image: redis:8-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "128mb", "--maxmemory-policy", "noeviction"]
+    volumes: ["redis-data:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    networks: [internal]
+
+  migrate:
+    <<: *backend
+    command: ["alembic", "upgrade", "head"]
+    healthcheck: { disable: true }
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  seed:
+    <<: *backend
+    command: ["python", "-m", "app.seed"]
+    healthcheck: { disable: true }
+    profiles: [demo]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  api:
+    <<: *backend
+    restart: unless-stopped
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      start_period: 15s
+      retries: 10
+
+  worker:
+    <<: *backend
+    command: ["python", "-m", "app.worker"]
+    healthcheck: { disable: true }
+    restart: unless-stopped
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_DEMO_MODE: ${DEMO_MODE:-true}
+    environment:
+      API_BASE_URL: http://api:8000
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3000}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    ports: ["127.0.0.1:3000:3000"]
+    init: true
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    depends_on:
+      api: { condition: service_healthy }
+    restart: unless-stopped
+    networks: [internal]
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    profiles: [observability]
+    volumes: ["./infra/prometheus.yml:/etc/prometheus/prometheus.yml:ro", "./infra/alerts.yml:/etc/prometheus/alerts.yml:ro"]
+    ports: ["127.0.0.1:9090:9090"]
+    networks: [internal]
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  internal:
