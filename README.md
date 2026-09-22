@@ -1,6 +1,6 @@
 # Stratum
 
-### Reliability, in focus.
+### Reliability, in focus. 
 
 An evidence-driven incident command center for engineering teams. Correlate repeated alerts, understand error-budget burn, investigate with bounded recommendations, and retain a record of every response decision.
 
@@ -188,6 +188,8 @@ The current product does not include OIDC/SSO, password reset, per-device token 
 For a portfolio, the strongest story is a demonstrated invariant under failure. Walk a reviewer through a duplicate signal race, a worker lease expiry, a stale incident update, and a cross-tenant request. The tests and implementation are the evidence.
 
 MIT licensed. See [CONTRIBUTING.md](CONTRIBUTING.md).
-#   s t r a t u m  
- #   s t r a t u m  
+#   s t r a t u m 
+ 
+ #   s t r a t u m 
+ 
  
